@@ -4,6 +4,7 @@ const {LAMPORTS_PER_SOL} = require('@_koi/web3.js');
 class CoreLogic {
   async task() {
     try {
+      this.sleep(10000);
       const value = 'Hello, World!';
 
       if (value) {
@@ -264,3 +265,19 @@ const coreLogic = new CoreLogic();
 module.exports = {
   coreLogic,
 };
+
+/*
+Working:
+
+1. Endpoint to get the data from IPFS
+2. Endpoint to submit the data to IPFS
+3. In submission, keep track of the data you are pinning and submit the hash of that
+4. Endpoint to showcase for a particular round how much data were you pining in that round
+5. Audit will verify the data you are claiming to pin, is actually pinned
+
+
+Issues:
+
+1. Verify how the replication is happening, maybe will require fetching data present on other node from one nodes gateway so it can replicate the data
+
+*/
