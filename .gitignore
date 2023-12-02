@@ -1,0 +1,8 @@
+dist
+build
+node_modules
+package-lock.json
+migrate.sh
+localKOIIDB.db
+.DS_Store
+linux-amd64_ipfs
