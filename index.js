@@ -6,7 +6,117 @@ const fs = require('fs');
 const axios = require('axios');
 const {exec} = require('child_process');
 
+const downloadFile = async (url, dest) => {
+  const response = await axios.get(url, {responseType: 'stream'});
+  const writer = fs.createWriteStream(dest);
 
+  return new Promise((resolve, reject) => {
+    response.data.pipe(writer);
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
+};
+const getPlatformExt = () => {
+  const platform = os.platform();
+  const arch = os.arch();
+
+  if (platform === 'darwin') {
+    if (arch === 'x64') {
+      return 'darwin-amd64';
+    } else if (arch === 'arm64') {
+      return 'darwin-arm64';
+    }
+  } else if (platform === 'linux') {
+    return 'linux-amd64';
+  } else if (platform === 'win32') {
+    return 'windows-amd64';
+  }
+
+  return null;
+};
+
+const setExecutablePermission = (filePath) => {
+  fs.chmodSync(filePath, '755'); // Add execute permission for owner
+};
+
+const initIPFS = (filePath) => {
+  const command = `./${filePath} init`;
+  console.log('Running ', command);
+  return new Promise((resolve, reject) => {
+    exec(command, (error) => {
+      if (error) {
+        // Podman is not installed or an error occurred
+        if (error.message.includes('ipfs configuration file already exists')) resolve(true);
+        else {
+          console.error(error);
+          reject(error);
+        }
+      } else {
+        // Podman is installed and the command executed successfully
+        resolve(true);
+      }
+    });
+  });
+};
+
+const startIPFSDaemon = (filePath) => {
+  const command = `./${filePath} daemon`;
+  console.log('Running ', command);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // Resolving after 10sec because he command won't exit
+      resolve(true);
+    }, 10000); // 10000 milliseconds = 10 seconds
+    exec(command, (error) => {
+      if (error) {
+        // Podman is not installed or an error occurred
+        console.error(error);
+        reject(error);
+      } else {
+        // Podman is installed and the command executed successfully
+        resolve(true);
+      }
+    });
+  });
+};
+
+const downloadFileIfNeeded = async (url, destination, currentPlatform) => {
+  const platformExt = getPlatformExt();
+
+  if (!platformExt) {
+    console.error('Unsupported platform');
+    return;
+  }
+
+  const fileName = `${currentPlatform}_ipfs`; // Adjust the version and filename accordingly
+
+  const filePath = path.join(destination, fileName);
+
+  if (fs.existsSync(filePath)) {
+    console.log('File already exists, skipping download.');
+    return filePath;
+  }
+
+  console.log('Downloading file...');
+  await downloadFile(url, filePath);
+  setExecutablePermission(filePath); // Set executable permission after download
+  console.log('File downloaded successfully.');
+  await initIPFS(filePath);
+  return filePath;
+};
+
+async function downloadKuboWrapper() {
+  const currentPlatform = getPlatformExt();
+  // const url = `https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_${currentPlatform}.tar.gz`;
+  const url = `https://github.com/SyedGhazanferAnwar/kubo-binaries/releases/download/v0.24.0/${currentPlatform}_ipfs`;
+
+  const downloadPath = await namespaceWrapper.getBasePath();
+  console.log('STARTING DOWNLOADING KUBO:', url);
+  const filePath = await downloadFileIfNeeded(url, downloadPath, currentPlatform);
+  await startIPFSDaemon(filePath);
+  console.log('IPFS daemon running!');
+}
+downloadKuboWrapper();
 async function setup() {
   console.log('setup function called');
   // Run default setup
