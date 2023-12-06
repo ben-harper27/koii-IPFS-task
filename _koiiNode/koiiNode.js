@@ -25,7 +25,7 @@ const TASK_ID = process.argv[3];
  * This will be the PORT on which the this task is expected to run the express server coming from the task node running this task. 
  * As all communication via the task node and this task will be done on this port.
  */
-const EXPRESS_PORT = process.argv[4] || 10000;
+const EXPRESS_PORT = process.argv[4] || 20000;
 
 // Not used anymore
 // const NODE_MODE = process.argv[5];
@@ -77,9 +77,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+// app.get('/', (req, res) => {
+//   res.send('Hello World!');
+// });
 
 const _server = app.listen(EXPRESS_PORT, () => {
   console.log(`${TASK_NAME} listening on port ${EXPRESS_PORT}`);

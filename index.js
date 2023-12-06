@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const {exec} = require('child_process');
+const ipfsEndpoints = require('./ipfsEndpoints');
+const multer = require('multer'); // For handling file uploads
 
 const downloadFile = async (url, dest) => {
   const response = await axios.get(url, {responseType: 'stream'});
@@ -116,7 +118,7 @@ async function downloadKuboWrapper() {
   await startIPFSDaemon(filePath);
   console.log('IPFS daemon running!');
 }
-downloadKuboWrapper();
+// downloadKuboWrapper();
 async function setup() {
   console.log('setup function called');
   // Run default setup
@@ -196,6 +198,8 @@ if (taskNodeAdministered) {
   setup();
 }
 if (app) {
+  const storage = multer.memoryStorage();
+  const upload = multer({storage: storage});
   //  Write your Express Endpoints here.
   //  For Example
   //  app.post('/accept-cid', async (req, res) => {})
@@ -208,4 +212,7 @@ if (app) {
 
     res.status(200).json({taskState: state});
   });
+
+  app.get('/ipfs/:cid/:filename?', ipfsEndpoints.getIPFSCID);
+  app.post('/ipfs/add', upload.array('files'), ipfsEndpoints.addIPFSCID);
 }
