@@ -1,11 +1,7 @@
-// import { create } from 'kubo-rpc-client'
-// let client;
 const {default: axios} = require('axios');
-const fs = require('fs');
-const fetch = require('node-fetch');
-const {Readable} = require('stream');
 const FormData = require('form-data');
-
+// const multiformats = require('multiformats');
+// const base58btc = require('base58btc'); // npm install base58btc
 module.exports = {
   getIPFSCID: async (req, res) => {
     try {
@@ -31,7 +27,6 @@ module.exports = {
   addIPFSCID: async (req, res) => {
     try {
       const files = req.files;
-      console.log(files);
       if (!files || files.length === 0) {
         return res.status(400).send({status: 400, message: 'No files were uploaded'});
       }
@@ -39,23 +34,23 @@ module.exports = {
       const formData = new FormData();
 
       files.forEach((file, index) => {
-        console.log(file.buffer);
-        formData.append(`path/files/${file.originalname}`, file.buffer, 
-        
-        {
-          filename: `path/files/${file.originalname}`,
-          path: `path/files/${file.originalname}`
-          // contentType: file.mimetype,
-        }
-        
-        );
+        formData.append(`${file.originalname}-${index}`, file.buffer, {
+          filename: `${file.originalname}`,
+          path: `${file.originalname}`,
+          contentType: file.mimetype,
+        });
       });
-
-    
-      // console.log(formData)
-      const ipfsResponse = await axios.post('http://127.0.0.1:5001/api/v0/add', formData);
-
-      res.send(ipfsResponse.data);
+      const ipfsResponse = await axios.post(
+        'http://127.0.0.1:5001/api/v0/add?wrap-with-directory=true&cid-version=1',
+        formData
+      );
+      const parsedResp = ipfsResponse.data
+        .split('\n')
+        .filter((e) => e != '')
+        .map((e) => JSON.parse(e));
+      const folderHash = parsedResp.find((e) => e.Name == '');
+      console.log('folderHash?.Hash', folderHash);
+      res.send({status: 200, cid: folderHash?.Hash});
     } catch (error) {
       console.error(error);
       if (error.code === 'ECONNABORTED') {
