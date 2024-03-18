@@ -42,7 +42,7 @@ const setExecutablePermission = (filePath) => {
 };
 
 const initIPFS = (filePath) => {
-  const command = `./${filePath} init`;
+  const command = `${filePath} init`;
   console.log('Running ', command);
   return new Promise((resolve, reject) => {
     exec(command, (error) => {
@@ -62,7 +62,7 @@ const initIPFS = (filePath) => {
 };
 
 const startIPFSDaemon = (filePath) => {
-  const command = `./${filePath} daemon`;
+  const command = `${filePath} daemon`;
   console.log('Running ', command);
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -92,8 +92,12 @@ const downloadFileIfNeeded = async (url, destination, currentPlatform) => {
 
   const fileName = `${currentPlatform}_ipfs`; // Adjust the version and filename accordingly
 
-  const filePath = path.join(destination, fileName);
-
+  let filePath;
+  if (taskNodeAdministered) {
+    filePath = path.join(destination, fileName);
+  } else {
+    filePath = `${destination}${fileName}`;
+  }
   if (fs.existsSync(filePath)) {
     console.log('File already exists, skipping download.');
     return filePath;
