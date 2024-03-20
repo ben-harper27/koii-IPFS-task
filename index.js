@@ -82,15 +82,8 @@ const startIPFSDaemon = (filePath) => {
   });
 };
 
-const downloadFileIfNeeded = async (url, destination, currentPlatform) => {
-  const platformExt = getPlatformExt();
-
-  if (!platformExt) {
-    console.error('Unsupported platform');
-    return;
-  }
-
-  const fileName = `${currentPlatform}_ipfs`; // Adjust the version and filename accordingly
+const downloadFileIfNeeded = async (url, destination, currentPlatform, ext) => {
+  const fileName = `${currentPlatform}_ipfs${ext}`; // Adjust the version and filename accordingly
 
   let filePath;
   if (taskNodeAdministered) {
@@ -113,12 +106,19 @@ const downloadFileIfNeeded = async (url, destination, currentPlatform) => {
 
 async function downloadKuboWrapper() {
   const currentPlatform = getPlatformExt();
+
+  if (!currentPlatform) {
+    console.error('Unsupported platform');
+    return;
+  }
   // const url = `https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_${currentPlatform}.tar.gz`;
-  const url = `https://github.com/SyedGhazanferAnwar/kubo-binaries/releases/download/v0.24.0/${currentPlatform}_ipfs`;
+  let ext = '';
+  if (currentPlatform.includes('windows')) ext = '.exe';
+  const url = `https://github.com/SyedGhazanferAnwar/kubo-binaries/releases/download/v0.24.0/${currentPlatform}_ipfs${ext}`;
 
   const downloadPath = await namespaceWrapper.getBasePath();
   console.log('STARTING DOWNLOADING KUBO:', url);
-  const filePath = await downloadFileIfNeeded(url, downloadPath, currentPlatform);
+  const filePath = await downloadFileIfNeeded(url, downloadPath, currentPlatform, ext);
   await startIPFSDaemon(filePath);
   console.log('IPFS daemon running!');
 }
