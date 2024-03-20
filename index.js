@@ -42,7 +42,7 @@ const setExecutablePermission = (filePath) => {
 };
 
 const initIPFS = (filePath) => {
-  const command = `${filePath} init`;
+  const command = `"${filePath}" init`;
   console.log('Running ', command);
   return new Promise((resolve, reject) => {
     exec(command, (error) => {
@@ -62,7 +62,7 @@ const initIPFS = (filePath) => {
 };
 
 const startIPFSDaemon = (filePath) => {
-  const command = `${filePath} daemon`;
+  const command = `"${filePath}" daemon`;
   console.log('Running ', command);
   return new Promise((resolve, reject) => {
     setTimeout(() => {
