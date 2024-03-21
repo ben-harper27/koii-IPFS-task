@@ -241,7 +241,12 @@ if (taskNodeAdministered) {
 }
 if (app) {
   const storage = multer.memoryStorage();
-  const upload = multer({storage: storage});
+  const upload = multer({
+    storage: storage,
+    limits: {
+      fileSize: 10 * 1024 * 1024,
+    },
+  });
   //  Write your Express Endpoints here.
   //  For Example
   //  app.post('/accept-cid', async (req, res) => {})
@@ -254,9 +259,8 @@ if (app) {
 
     res.status(200).json({taskState: state});
   });
-  
+
   app.get('/ipfs/get-pinned-cids', ipfsEndpoints.getPinnedCIDs);
   app.post('/ipfs/add', upload.array('files'), ipfsEndpoints.addIPFSCID);
   app.get('/ipfs/:cid/:filename?', ipfsEndpoints.getIPFSCID);
-
 }

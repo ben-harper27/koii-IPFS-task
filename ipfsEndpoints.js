@@ -2,11 +2,13 @@ const {default: axios} = require('axios');
 const FormData = require('form-data');
 // const multiformats = require('multiformats');
 // const base58btc = require('base58btc'); // npm install base58btc
+const baseIpfsApiUrl = 'http://127.0.0.1:5001';
+const baseIpfsGatewayUrl = 'http://127.0.0.1:8080';
 module.exports = {
   getIPFSCID: async (req, res) => {
     try {
       const {cid, filename} = req.params;
-      const response = await axios(`http://127.0.0.1:8080/ipfs/${cid}/${filename || ''}`, {
+      const response = await axios(`${baseIpfsGatewayUrl}/ipfs/${cid}/${filename || ''}`, {
         responseType: 'stream',
         timeout: 180000,
       });
@@ -14,6 +16,15 @@ module.exports = {
 
       // Pipe the response stream directly to res.send
       response.data.pipe(res);
+      // Pinning the data that you served.
+      axios
+        .post(`${baseIpfsApiUrl}/api/v0/pin/add?arg=${cid}`)
+        .then((response) => {
+          console.log('Pin added successfully:', response.data);
+        })
+        .catch((error) => {
+          console.error('Error adding pin:', error);
+        });
     } catch (error) {
       if (error.code === 'ECONNABORTED') {
         // Timeout error
@@ -48,7 +59,7 @@ module.exports = {
         });
       });
       const ipfsResponse = await axios.post(
-        'http://127.0.0.1:5001/api/v0/add?wrap-with-directory=true&cid-version=1',
+        `${baseIpfsApiUrl}/api/v0/add?wrap-with-directory=true&cid-version=1`,
         formData
       );
       const parsedResp = ipfsResponse.data
@@ -77,7 +88,7 @@ module.exports = {
   },
   getPinnedCIDs: async (req, res) => {
     try {
-      const ipfsResponse = await axios.post('http://127.0.0.1:5001/api/v0/pin/ls');
+      const ipfsResponse = await axios.post(`${baseIpfsApiUrl}/api/v0/pin/ls`);
       const data = ipfsResponse.data;
       res.send({status: 200, pinnedCIDs: data});
     } catch (error) {
