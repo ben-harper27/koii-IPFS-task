@@ -41,45 +41,83 @@ const setExecutablePermission = (filePath) => {
   fs.chmodSync(filePath, '755'); // Add execute permission for owner
 };
 
-const initIPFS = (filePath) => {
-  const command = `"${filePath}" init`;
-  console.log('Running ', command);
-  return new Promise((resolve, reject) => {
-    exec(command, (error) => {
-      if (error) {
-        // Podman is not installed or an error occurred
-        if (error.message.includes('ipfs configuration file already exists')) resolve(true);
-        else {
-          console.error(error);
-          reject(error);
-        }
-      } else {
-        // Podman is installed and the command executed successfully
-        resolve(true);
-      }
-    });
-  });
-};
+// const initIPFS = (filePath) => {
+//   const command = `"${filePath}" init`;
+//   console.log('Running ', command);
+//   return new Promise((resolve, reject) => {
+//     exec(command, (error) => {
+//       if (error) {
+//         // Podman is not installed or an error occurred
+//         if (error.message.includes('ipfs configuration file already exists')) resolve(true);
+//         else {
+//           console.error(error);
+//           reject(error);
+//         }
+//       } else {
+//         // Podman is installed and the command executed successfully
+//         resolve(true);
+//       }
+//     });
+//   });
+// };
 
 const startIPFSDaemon = (filePath) => {
-  const command = `"${filePath}" daemon`;
+  const command = `"${filePath}" daemon --init`;
   console.log('Running ', command);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Resolving after 10sec because he command won't exit
-      resolve(true);
-    }, 10000); // 10000 milliseconds = 10 seconds
-    exec(command, (error) => {
-      if (error) {
-        // Podman is not installed or an error occurred
-        console.error(error);
-        reject(error);
-      } else {
-        // Podman is installed and the command executed successfully
-        resolve(true);
-      }
+  // Create a variable to store the reference to the child process
+  let ipfsDaemonProcess;
+
+  // Start the IPFS daemon
+  const startDaemon = () => {
+    return new Promise((resolve, reject) => {
+      ipfsDaemonProcess = exec(command, (error) => {
+        if (error) {
+          console.error(error);
+          reject(error);
+        } else {
+          resolve(true);
+        }
+      });
     });
+  };
+
+  // Cleanup function to stop the IPFS daemon
+  const stopDaemon = () => {
+    const command = `"${filePath}" shutdown`;
+    console.log(`Running ${command}`);
+    return new Promise((resolve, reject) => {
+      ipfsDaemonProcess = exec(command, (error) => {
+        if (error) {
+          console.error(error);
+          reject(error);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  };
+
+  // Listen for process exit event
+  process.on('exit', () => {
+    console.log('Exiting...');
+    stopDaemon();
   });
+
+  // Listen for SIGINT (Ctrl+C) event
+  process.on('SIGINT', () => {
+    console.log('SIGINT received. Exiting...');
+    stopDaemon();
+    process.exit(1); // Exit with error code 1
+  });
+  // Listen for SIGINT (Ctrl+C) event
+  process.on('SIGTERM', () => {
+    console.log('SIGINT received. Exiting...');
+    stopDaemon();
+    process.exit(1); // Exit with error code 1
+  });
+
+  // Start the daemon and return the promise
+  return startDaemon();
 };
 
 const downloadFileIfNeeded = async (url, destination, currentPlatform, ext) => {
@@ -100,7 +138,7 @@ const downloadFileIfNeeded = async (url, destination, currentPlatform, ext) => {
   await downloadFile(url, filePath);
   setExecutablePermission(filePath); // Set executable permission after download
   console.log('File downloaded successfully.');
-  await initIPFS(filePath);
+  // await initIPFS(filePath);
   return filePath;
 };
 
