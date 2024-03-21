@@ -15,12 +15,19 @@ module.exports = {
       // Pipe the response stream directly to res.send
       response.data.pipe(res);
     } catch (error) {
-      console.error(error);
       if (error.code === 'ECONNABORTED') {
         // Timeout error
         res.status(504).send('Request Timed Out');
       } else {
         res.status(500).send('Internal Server Error');
+      }
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Server responded with status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      } else {
+        // Something happened in setting up the request that triggered an error
+        console.error('Error:', error.message);
       }
     }
   },
@@ -52,12 +59,36 @@ module.exports = {
       console.log('folderHash?.Hash', folderHash);
       res.send({status: 200, cid: folderHash?.Hash});
     } catch (error) {
-      console.error(error);
       if (error.code === 'ECONNABORTED') {
         // Timeout error
         res.status(504).send('Request Timed Out');
       } else {
         res.status(500).send('Internal Server Error');
+      }
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Server responded with status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      } else {
+        // Something happened in setting up the request that triggered an error
+        console.error('Error:', error.message);
+      }
+    }
+  },
+  getPinnedCIDs: async (req, res) => {
+    try {
+      const ipfsResponse = await axios.post('http://127.0.0.1:5001/api/v0/pin/ls');
+      const data = ipfsResponse.data;
+      res.send({status: 200, pinnedCIDs: data});
+    } catch (error) {
+      // Handle error
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Server responded with status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      } else {
+        // Something happened in setting up the request that triggered an error
+        console.error('Error:', error.message);
       }
     }
   },

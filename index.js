@@ -62,7 +62,7 @@ const setExecutablePermission = (filePath) => {
 // };
 
 const startIPFSDaemon = (filePath) => {
-  const command = `"${filePath}" daemon --init`;
+  const command = `"${filePath}" daemon --init --migrate=true`;
   console.log('Running ', command);
   // Create a variable to store the reference to the child process
   let ipfsDaemonProcess;
@@ -254,7 +254,9 @@ if (app) {
 
     res.status(200).json({taskState: state});
   });
-
-  app.get('/ipfs/:cid/:filename?', ipfsEndpoints.getIPFSCID);
+  
+  app.get('/ipfs/get-pinned-cids', ipfsEndpoints.getPinnedCIDs);
   app.post('/ipfs/add', upload.array('files'), ipfsEndpoints.addIPFSCID);
+  app.get('/ipfs/:cid/:filename?', ipfsEndpoints.getIPFSCID);
+
 }
