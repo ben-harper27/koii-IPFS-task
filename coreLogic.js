@@ -1,17 +1,21 @@
 const {namespaceWrapper} = require('./_koiiNode/koiiNode');
 const {LAMPORTS_PER_SOL} = require('@_koi/web3.js');
+const crypto = require('crypto');
+const {default: axios} = require('axios');
+const baseIpfsApiUrl = 'http://127.0.0.1:5001';
 
 class CoreLogic {
   async task() {
     try {
-      this.sleep(10000);
-      const value = 'Hello, World!';
+      const ipfsResponse = await axios.post(`${baseIpfsApiUrl}/api/v0/pin/ls`);
+      const data = ipfsResponse.data;
+      const expectedHash = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
 
-      if (value) {
+      if (expectedHash) {
         // store value on NeDB
-        await namespaceWrapper.storeSet('value', value);
+        await namespaceWrapper.storeSet('value', expectedHash);
       }
-      return value;
+      return expectedHash;
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
       return 'ERROR IN EXECUTING TASK' + err;
