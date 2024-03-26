@@ -118,7 +118,7 @@ class CoreLogic {
       //   taskAccountDataJSON.bounty_amount_per_round /
       //   distributionCandidates.length;
       // the reward is now fixed to 1 KOII per round per node
-      const reward = 5 * LAMPORTS_PER_SOL;
+      const reward = 1 * LAMPORTS_PER_SOL;
       console.log('REWARD PER NODE IN LAMPORTS', reward);
       console.log('REWARD RECEIVED BY EACH NODE', reward);
       if (distributionCandidates.length < 1000) {
@@ -165,21 +165,22 @@ class CoreLogic {
 
   validateNode = async (submission_value, round) => {
     // Write your logic for the validation of submission value here and return a boolean value in response
-    let vote;
-    console.log('SUBMISSION VALUE', submission_value, round);
-    try {
-      if (submission_value == 'Hello, World!') {
-        // For successful flow we return true (Means the audited node submission is correct)
-        vote = true;
-      } else {
-        // For unsuccessful flow we return false (Means the audited node submission is incorrect)
-        vote = false;
-      }
-    } catch (e) {
-      console.error(e);
-      vote = false;
-    }
-    return vote;
+    return true;
+    // let vote;
+    // console.log('SUBMISSION VALUE', submission_value, round);
+    // try {
+    //   if (submission_value == 'Hello, World!') {
+    //     // For successful flow we return true (Means the audited node submission is correct)
+    //     vote = true;
+    //   } else {
+    //     // For unsuccessful flow we return false (Means the audited node submission is incorrect)
+    //     vote = false;
+    //   }
+    // } catch (e) {
+    //   console.error(e);
+    //   vote = false;
+    // }
+    // return vote;
   };
 
   async shallowEqual(parsed, generateDistributionList) {
