@@ -253,6 +253,9 @@ if (app) {
 
   // Sample API that return your task state
 
+  app.get('/health', async (req, res) => {
+    res.status(200).send({status: 200, message: 'OK'});
+  });
   app.get('/taskState', async (req, res) => {
     const state = await namespaceWrapper.getTaskState();
     console.log('TASK STATE', state);

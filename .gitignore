@@ -6,3 +6,4 @@ migrate.sh
 localKOIIDB.db
 .DS_Store
 linux-amd64_ipfs
+taskStateInfoKeypair.json
