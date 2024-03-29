@@ -29,8 +29,10 @@ module.exports = {
       if (error.code === 'ECONNABORTED') {
         // Timeout error
         res.status(504).send('Request Timed Out');
+      } else if (error?.response?.status == 404) {
+        res.status(404).send('Not found');
       } else {
-        res.status(500).send('Internal Server Error');
+        res.status(422).send(error.message);
       }
       if (error.response) {
         // The request was made and the server responded with a status code

@@ -12,10 +12,10 @@ task_executable_network: 'IPFS'
 task_audit_program: 'dist/main.js'
 
 # Total round time of your task : it must be given in slots and each slot is roughly equal to 408ms
-round_time: 1500
+round_time: 3000
 
-audit_window: 500
-submission_window: 500
+audit_window: 1000
+submission_window: 1000
 
 # Amounts in KOII
 
@@ -47,7 +47,7 @@ requirementsTags:
 # OPTIONAL variables variables for creating task / REQUIRED variables for update task
 
 # OPTIONAL Only provide the taskId if you are updating the task otherwise leave blank
-task_id: ''
+task_id: '2vkK8onwzhcCkppDmiaTBvkPhcxMFpp6LkFyNBfSJErA'
 
 # Provide the description for changes made in new version of task
-migrationDescription: ''
+migrationDescription: 'Increased round time to 10 minutes'
