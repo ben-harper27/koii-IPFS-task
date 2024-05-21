@@ -58,7 +58,6 @@ module.exports = {
       if (!signature || !stakingWalletPubkey) {
         return res.status(400).send('No Signature or stakingWalletPubkey provided');
       }
-      console.log({files})
       try {
         const fileBuffers = files.map(e=> e.buffer);
         fileData = Buffer.concat(fileBuffers);
@@ -72,7 +71,6 @@ module.exports = {
         return res.status(422).send('Staking wallet is not valid');
       }
 
-      console.log({signature, stakingWalletPubkey});
       const formData = new FormData();
 
       files.forEach((file, index) => {
