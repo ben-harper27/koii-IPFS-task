@@ -47,7 +47,7 @@ requirementsTags:
 # OPTIONAL variables variables for creating task / REQUIRED variables for update task
 
 # OPTIONAL Only provide the taskId if you are updating the task otherwise leave blank
-task_id: '2vkK8onwzhcCkppDmiaTBvkPhcxMFpp6LkFyNBfSJErA'
+task_id: 'F7Zhp8ZT3By2gEPxJ5xTCbhJq575mqLqtwfkxYpvTw2J'
 
 # Provide the description for changes made in new version of task
-migrationDescription: 'Increased round time to 10 minutes'
+migrationDescription: 'Better error handling'

@@ -1,5 +1,7 @@
 const {default: axios} = require('axios');
+const crypto = require('crypto');
 const FormData = require('form-data');
+const fs = require('fs');
 // const multiformats = require('multiformats');
 // const base58btc = require('base58btc'); // npm install base58btc
 const baseIpfsApiUrl = 'http://127.0.0.1:5001';
@@ -48,9 +50,29 @@ module.exports = {
     try {
       const files = req.files;
       if (!files || files.length === 0) {
-        return res.status(400).send({status: 400, message: 'No files were uploaded'});
+        return res.status(400).send('No files were uploaded');
       }
 
+      const signature = req.body.signature;
+      const stakingWalletPubkey = req.body.stakingWalletPubkey;
+      if (!signature || !stakingWalletPubkey) {
+        return res.status(400).send('No Signature or stakingWalletPubkey provided');
+      }
+      console.log({files})
+      try {
+        const fileBuffers = files.map(e=> e.buffer);
+        fileData = Buffer.concat(fileBuffers);
+        await hashFileData(fileData);
+      } catch (error) {
+        console.error(error);
+        return res.status(422).send('File hash is not signed by the wallet properly');
+      }
+      let isStakingWalletValid = await checkStakingWalletValidity();
+      if (!isStakingWalletValid) {
+        return res.status(422).send('Staking wallet is not valid');
+      }
+
+      console.log({signature, stakingWalletPubkey});
       const formData = new FormData();
 
       files.forEach((file, index) => {
@@ -106,3 +128,24 @@ module.exports = {
     }
   },
 };
+
+async function hashFile(filePath, algorithm = 'sha256') {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash(algorithm);
+    const fileStream = fs.createReadStream(filePath);
+
+    fileStream.on('error', (err) => reject(err));
+    fileStream.on('data', (chunk) => hash.update(chunk));
+    fileStream.on('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+async function hashFileData(fileData, algorithm = 'sha256') {
+  const hash = crypto.createHash(algorithm);
+  hash.update(fileData);
+  return hash.digest('hex');
+}
+
+async function checkStakingWalletValidity(){
+  return true
+}
