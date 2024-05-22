@@ -2,10 +2,15 @@ const {default: axios} = require('axios');
 const crypto = require('crypto');
 const FormData = require('form-data');
 const fs = require('fs');
+const {Connection, PublicKey, Keypair} = require('@_koi/web3.js');
+
 // const multiformats = require('multiformats');
 // const base58btc = require('base58btc'); // npm install base58btc
 const baseIpfsApiUrl = 'http://127.0.0.1:5001';
 const baseIpfsGatewayUrl = 'http://127.0.0.1:8080';
+
+const connection = new Connection('https://testnet.koii.network');
+
 module.exports = {
   getIPFSCID: async (req, res) => {
     try {
@@ -59,16 +64,16 @@ module.exports = {
         return res.status(400).send('No Signature or stakingWalletPubkey provided');
       }
       try {
-        const fileBuffers = files.map(e=> e.buffer);
+        const fileBuffers = files.map((e) => e.buffer);
         fileData = Buffer.concat(fileBuffers);
         await hashFileData(fileData);
       } catch (error) {
         console.error(error);
         return res.status(422).send('File hash is not signed by the wallet properly');
       }
-      let isStakingWalletValid = await checkStakingWalletValidity();
+      let isStakingWalletValid = await checkStakingWalletValidity(stakingWalletPubkey);
       if (!isStakingWalletValid) {
-        return res.status(422).send('Staking wallet is not valid');
+        return res.status(422).send('Staking wallet is not valid (Mismatch owner)');
       }
 
       const formData = new FormData();
@@ -144,6 +149,17 @@ async function hashFileData(fileData, algorithm = 'sha256') {
   return hash.digest('hex');
 }
 
-async function checkStakingWalletValidity(){
-  return true
+async function checkStakingWalletValidity(stakingWalletPubkey) {
+  try {
+    let account = await connection.getAccountInfo(new PublicKey(stakingWalletPubkey));
+    if (!account) return false;
+    if (account.owner.toBase58() == 'Koiitask22222222222222222222222222222222222') {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error(error);
+    return true;
+  }
 }
