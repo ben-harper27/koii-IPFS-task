@@ -236,9 +236,9 @@ async function setup() {
   // console.log("RESPONSE TRIGGER", responsePayout);
 }
 
-// if (taskNodeAdministered) {
+if (taskNodeAdministered) {
   setup();
-// }
+}
 if (app) {
   const storage = multer.memoryStorage();
   const upload = multer({
