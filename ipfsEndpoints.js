@@ -132,17 +132,6 @@ module.exports = {
   },
 };
 
-async function hashFile(filePath, algorithm = 'sha256') {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash(algorithm);
-    const fileStream = fs.createReadStream(filePath);
-
-    fileStream.on('error', (err) => reject(err));
-    fileStream.on('data', (chunk) => hash.update(chunk));
-    fileStream.on('end', () => resolve(hash.digest('hex')));
-  });
-}
-
 async function hashFileData(fileData, algorithm = 'sha256') {
   const hash = crypto.createHash(algorithm);
   hash.update(fileData);
