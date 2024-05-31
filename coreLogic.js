@@ -37,8 +37,8 @@ class CoreLogic {
 
   async generateDistributionList(round, _dummyTaskState) {
     try {
-      console.log('GenerateDistributionList called');
-      console.log('I am selected node');
+      console.log("GenerateDistributionList called");
+      console.log("I am selected node");
 
       // Write the logic to generate the distribution list here by introducing the rules of your choice
 
@@ -46,34 +46,54 @@ class CoreLogic {
 
       let distributionList = {};
       let distributionCandidates = [];
-      let taskAccountDataJSON = await namespaceWrapper.getTaskState();
-      if (taskAccountDataJSON == null) taskAccountDataJSON = _dummyTaskState;
+      let taskAccountDataJSON = null;
+      let taskStakeListJSON = null;
+      try {
+        taskAccountDataJSON = await namespaceWrapper.getTaskSubmissionInfo(
+          round,
+        );
+      } catch (error) {
+        console.error('ERROR IN FETCHING TASK SUBMISSION DATA', error);
+        return distributionList;
+      }
+      if (taskAccountDataJSON == null) {
+        console.error('ERROR IN FETCHING TASK SUBMISSION DATA');
+        return distributionList;
+      }
       const submissions = taskAccountDataJSON.submissions[round];
-      const submissions_audit_trigger = taskAccountDataJSON.submissions_audit_trigger[round];
+      const submissions_audit_trigger =
+        taskAccountDataJSON.submissions_audit_trigger[round];
       if (submissions == null) {
-        console.log('No submisssions found in N-2 round');
+        console.log("No submisssions found in N-2 round");
         return distributionList;
       } else {
         const keys = Object.keys(submissions);
         const values = Object.values(submissions);
         const size = values.length;
-        console.log('Submissions from last round: ', keys, values, size);
-
+        taskStakeListJSON = await namespaceWrapper.getTaskState({
+          is_stake_list_required: true,
+        });
+        if (taskStakeListJSON == null) {
+          console.error('ERROR IN FETCHING TASK STAKING LIST');
+          return distributionList;
+        }
         // Logic for slashing the stake of the candidate who has been audited and found to be false
         for (let i = 0; i < size; i++) {
           const candidatePublicKey = keys[i];
-          if (submissions_audit_trigger && submissions_audit_trigger[candidatePublicKey]) {
-            console.log('distributions_audit_trigger votes ', submissions_audit_trigger[candidatePublicKey].votes);
+          if (
+            submissions_audit_trigger &&
+            submissions_audit_trigger[candidatePublicKey]
+          ) {
             const votes = submissions_audit_trigger[candidatePublicKey].votes;
             if (votes.length === 0) {
               // slash 70% of the stake as still the audit is triggered but no votes are casted
               // Note that the votes are on the basis of the submission value
               // to do so we need to fetch the stakes of the candidate from the task state
-              const stake_list = taskAccountDataJSON.stake_list;
+              const stake_list = taskStakeListJSON.stake_list;
               const candidateStake = stake_list[candidatePublicKey];
               const slashedStake = candidateStake * 0.7;
               distributionList[candidatePublicKey] = -slashedStake;
-              console.log('Candidate Stake', candidateStake);
+              console.log("Candidate Stake", candidateStake);
             } else {
               let numOfVotes = 0;
               for (let index = 0; index < votes.length; index++) {
@@ -81,15 +101,15 @@ class CoreLogic {
                 else numOfVotes--;
               }
 
-              if (numOfVotes < 0) {
+              if (numOfVotes < 0 && taskStakeListJSON) {
                 // slash 70% of the stake as the number of false votes are more than the number of true votes
                 // Note that the votes are on the basis of the submission value
                 // to do so we need to fetch the stakes of the candidate from the task state
-                const stake_list = taskAccountDataJSON.stake_list;
+                const stake_list = taskStakeListJSON.stake_list;
                 const candidateStake = stake_list[candidatePublicKey];
                 const slashedStake = candidateStake * 0.7;
                 distributionList[candidatePublicKey] = -slashedStake;
-                console.log('Candidate Stake', candidateStake);
+                console.log("Candidate Stake", candidateStake);
               }
 
               if (numOfVotes > 0) {
@@ -110,18 +130,21 @@ class CoreLogic {
       //   distributionCandidates.push(`element ${i + 1}`);
       // }
 
-      console.log('LENGTH OF DISTRIBUTION CANDIDATES', distributionCandidates.length);
+      console.log(
+        "LENGTH OF DISTRIBUTION CANDIDATES",
+        distributionCandidates.length
+      );
 
       //console.log("LENGTH", distributionCandidates.length);
-      console.log('Bounty Amount', taskAccountDataJSON.bounty_amount_per_round);
+      console.log("Bounty Amount", taskAccountDataJSON.bounty_amount_per_round);
       // const reward =
       //   taskAccountDataJSON.bounty_amount_per_round /
       //   distributionCandidates.length;
       // the reward is now fixed to 1 KOII per round per node
       const reward = 1 * LAMPORTS_PER_SOL;
-      console.log('REWARD PER NODE IN LAMPORTS', reward);
-      console.log('REWARD RECEIVED BY EACH NODE', reward);
-      if (distributionCandidates.length < 1000) {
+      // console.log("REWARD PER NODE IN LAMPORTS", reward);
+      // console.log("REWARD RECEIVED BY EACH NODE", reward);
+      if (distributionCandidates.length < 20000) {
         for (let i = 0; i < distributionCandidates.length; i++) {
           distributionList[distributionCandidates[i]] = reward;
         }
@@ -129,8 +152,10 @@ class CoreLogic {
         // randomly select 1000 nodes
         const selectedNodes = [];
 
-        while (selectedNodes.length < 1000) {
-          const randomIndex = Math.floor(Math.random() * distributionCandidates.length);
+        while (selectedNodes.length < 20000) {
+          const randomIndex = Math.floor(
+            Math.random() * distributionCandidates.length
+          );
           const randomNode = distributionCandidates[randomIndex];
           if (!selectedNodes.includes(randomNode)) {
             selectedNodes.push(randomNode);
@@ -145,7 +170,7 @@ class CoreLogic {
       //console.log("Distribution List", distributionList);
       return distributionList;
     } catch (err) {
-      console.log('ERROR IN GENERATING DISTRIBUTION LIST', err);
+      console.log("ERROR IN GENERATING DISTRIBUTION LIST", err);
     }
   }
 
