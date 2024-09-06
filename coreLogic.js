@@ -9,13 +9,26 @@ class CoreLogic {
     try {
       const ipfsResponse = await axios.post(`${baseIpfsApiUrl}/api/v0/pin/ls`);
       const data = ipfsResponse.data;
-      const expectedHash = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
+      const cids = Object.keys(data.Keys);
 
-      if (expectedHash) {
-        // store value on NeDB
-        await namespaceWrapper.storeSet('value', expectedHash);
+      const proofs = await Promise.all(
+        cids.map(async (cid) => {
+          const requesterPubKey = await namespaceWrapper.getMainAccountPubkey();
+          const signature = await namespaceWrapper.payloadSigning(cid);
+          return {cid, requesterPubKey, signature};
+        }),
+      );
+
+      const submission = {
+        cids,
+        proofs
       }
-      return expectedHash;
+
+      if (submission) {
+        // store value on NeDB
+        await namespaceWrapper.storeSet('value', submission);
+      }
+      return submission;
     } catch (err) {
       console.log('ERROR IN EXECUTING TASK', err);
       return 'ERROR IN EXECUTING TASK' + err;

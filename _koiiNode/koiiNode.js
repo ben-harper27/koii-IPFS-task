@@ -672,7 +672,7 @@ class NamespaceWrapper {
     //   `Fetching the submissions of round ${round}`,
     //   taskAccountDataJSON.submissions[round],
     // );
-    const submissions = taskAccountDataJSON.submissions[round];
+    const submissions = taskAccountDataJSON;
     if (submissions == null) {
       console.log(`No submisssions found in round ${round}`);
       return `No submisssions found in round ${round}`;

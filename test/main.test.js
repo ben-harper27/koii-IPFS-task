@@ -10,24 +10,51 @@ describe('Performing the task', () => {
   it('should performs the core logic task', async () => {
     const result = await coreLogic.task();
     expect(result).not.toContain('ERROR IN EXECUTING TASK');
+    expect(result).toBeDefined();
+    expect(result.cids).toBeInstanceOf(Array);
+    expect(result.proofs).toBeInstanceOf(Array);
+    result.proofs.forEach((proof) => {
+      expect(proof).toHaveProperty("cid");
+      expect(proof).toHaveProperty("requesterPubKey");
+      expect(proof).toHaveProperty("signature");
+    });
   });
 
   it('should fetch the submission', async () => {
     const result = await coreLogic.fetchSubmission();
     expect(result).toBeDefined();
     expect(result).not.toBeNaN();
+    expect(result.cids).toBeInstanceOf(Array);
+    expect(result.proofs).toBeInstanceOf(Array);
+    result.proofs.forEach((proof) => {
+      expect(proof).toHaveProperty("cid");
+      expect(proof).toHaveProperty("requesterPubKey");
+      expect(proof).toHaveProperty("signature");
+    });
   });
   it('should make the submission to k2 for dummy round 1', async () => {
     const round = 1;
     await coreLogic.submitTask(round);
     const taskState = await namespaceWrapper.getTaskState();
+
+    const proofSchema = Joi.object({
+      cid: Joi.string().required(),
+      requesterPubKey: Joi.string().required(),
+      signature: Joi.string().required(),
+    });
+
+    const submissionSchema = Joi.object({
+      cids: Joi.array().items(Joi.string()).required(),
+      proofs: Joi.array().items(proofSchema).required(),
+    });
+
     const schema = Joi.object()
       .pattern(
         Joi.string(),
         Joi.object().pattern(
           Joi.string(),
           Joi.object({
-            submission_value: Joi.string().required(),
+            submission_value: submissionSchema.required(),
             slot: Joi.number().integer().required(),
             round: Joi.number().integer().required(),
           }),
