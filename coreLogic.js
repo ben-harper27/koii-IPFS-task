@@ -3,6 +3,7 @@ const {LAMPORTS_PER_SOL} = require('@_koi/web3.js');
 const crypto = require('crypto');
 const {default: axios} = require('axios');
 const baseIpfsApiUrl = 'http://127.0.0.1:5001';
+const baseIpfsGatewayUrl = 'http://127.0.0.1:8080';
 
 class CoreLogic {
   async task() {
@@ -201,24 +202,53 @@ class CoreLogic {
     }
   }
 
+  async fetchFileFromIPFS(cid) {
+    try {
+      const response = await axios.get(`${baseIpfsGatewayUrl}/ipfs/${cid}`, {
+        responseType: 'arraybuffer',
+      });
+      return Buffer.from(response.data);
+    } catch (error) {
+      console.error(`Error fetching file from IPFS for CID: ${cid}`, error);
+      return null;
+    }
+  }
+
   validateNode = async (submission_value, round) => {
     // Write your logic for the validation of submission value here and return a boolean value in response
-    return true;
-    // let vote;
-    // console.log('SUBMISSION VALUE', submission_value, round);
-    // try {
-    //   if (submission_value == 'Hello, World!') {
-    //     // For successful flow we return true (Means the audited node submission is correct)
-    //     vote = true;
-    //   } else {
-    //     // For unsuccessful flow we return false (Means the audited node submission is incorrect)
-    //     vote = false;
-    //   }
-    // } catch (e) {
-    //   console.error(e);
-    //   vote = false;
-    // }
-    // return vote;
+    let vote = false;
+    console.log('SUBMISSION VALUE', submission_value, round);
+    try {
+      // TODO: Check the submitter has the right to store
+      for (let proof of submission_value.proofs) {
+        const {cid, requesterPubKey, signature} = proof;
+        console.log('CID', cid);
+        console.log('REQUESTER PUB KEY', requesterPubKey);
+        console.log('SIGNATURE', signature);
+
+        // 1. Fetch the file from IPFS
+        const fileBuffer = await this.fetchFileFromIPFS(cid);
+        console.log('FILE BUFFER', fileBuffer);
+
+        const taskState = await namespaceWrapper.getTaskState();
+        console.log('TASK STATE', taskState);
+        // 2. Check that the proofs are valid (signature, etc)
+        const { data } = await namespaceWrapper.verifySignature(signature, requesterPubKey);
+        console.log('IS SIGNATURE VALID', data);
+        const parsedData = JSON.parse(data);
+        console.log('PARSED DATA', parsedData);
+        if (parsedData == cid) {
+          vote = true;
+        }
+        // TODO: 3. Query the node for the CID
+        // a) did they send the file
+        // b) does the file sent match the CID
+      }
+    } catch (e) {
+      console.error(e);
+      vote = false;
+    }
+    return vote;
   };
 
   async shallowEqual(parsed, generateDistributionList) {

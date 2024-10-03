@@ -688,42 +688,32 @@ class NamespaceWrapper {
         let candidatePublicKey = keys[i];
         // console.log('FOR CANDIDATE KEY', candidatePublicKey);
         let candidateKeyPairPublicKey = new PublicKey(keys[i]);
-        if (candidatePublicKey == submitterPubkey) {
+        if (candidatePublicKey == submitterPubkey && taskNodeAdministered) {
           console.log("YOU CANNOT VOTE ON YOUR OWN SUBMISSIONS");
-        } else {
-          try {
-            // console.log(
-            //   'SUBMISSION VALUE TO CHECK',
-            //   values[i].submission_value,
-            // );
-            isValid = await validate(values[i].submission_value, round);
-            // console.log(`Voting ${isValid} to ${candidatePublicKey}`);
+          continue;
+        }
+        try {
+          // console.log(
+          //   'SUBMISSION VALUE TO CHECK',
+          //   values[i].submission_value,
+          // );
+          isValid = await validate(values[i].submission_value, round);
+          // console.log(`Voting ${isValid} to ${candidatePublicKey}`);
 
-            if (isValid) {
-              // check for the submissions_audit_trigger , if it exists then vote true on that otherwise do nothing
-              const submissions_audit_trigger =
-                taskAccountDataJSON.submissions_audit_trigger[round];
-              // console.log('SUBMIT AUDIT TRIGGER', submissions_audit_trigger);
-              // console.log(
-              //   "CANDIDATE PUBKEY CHECK IN AUDIT TRIGGER",
-              //   submissions_audit_trigger[candidatePublicKey]
-              // );
-              if (
-                submissions_audit_trigger &&
-                submissions_audit_trigger[candidatePublicKey]
-              ) {
-                console.log("VOTING TRUE ON AUDIT");
-                const response = await this.auditSubmission(
-                  candidateKeyPairPublicKey,
-                  isValid,
-                  submitterAccountKeyPair,
-                  round
-                );
-                console.log("RESPONSE FROM AUDIT FUNCTION", response);
-              }
-            } else if (isValid == false) {
-              // Call auditSubmission function and isValid is passed as false
-              console.log("RAISING AUDIT / VOTING FALSE");
+          if (isValid) {
+            // check for the submissions_audit_trigger , if it exists then vote true on that otherwise do nothing
+            const submissions_audit_trigger =
+              taskAccountDataJSON.submissions_audit_trigger[round];
+            // console.log('SUBMIT AUDIT TRIGGER', submissions_audit_trigger);
+            // console.log(
+            //   "CANDIDATE PUBKEY CHECK IN AUDIT TRIGGER",
+            //   submissions_audit_trigger[candidatePublicKey]
+            // );
+            if (
+              submissions_audit_trigger &&
+              submissions_audit_trigger[candidatePublicKey]
+            ) {
+              console.log("VOTING TRUE ON AUDIT");
               const response = await this.auditSubmission(
                 candidateKeyPairPublicKey,
                 isValid,
@@ -732,9 +722,19 @@ class NamespaceWrapper {
               );
               console.log("RESPONSE FROM AUDIT FUNCTION", response);
             }
-          } catch (err) {
-            console.log("ERROR IN ELSE CONDITION", err);
+          } else if (isValid == false) {
+            // Call auditSubmission function and isValid is passed as false
+            console.log("RAISING AUDIT / VOTING FALSE");
+            const response = await this.auditSubmission(
+              candidateKeyPairPublicKey,
+              isValid,
+              submitterAccountKeyPair,
+              round
+            );
+            console.log("RESPONSE FROM AUDIT FUNCTION", response);
           }
+        } catch (err) {
+          console.log("ERROR IN ELSE CONDITION", err);
         }
       }
     }
